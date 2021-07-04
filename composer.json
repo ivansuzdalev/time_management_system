@@ -12,6 +12,7 @@
         "sensio/framework-extra-bundle": "^6.1",
         "symfony/asset": "*",
         "symfony/console": "*",
+        "symfony/dotenv": "*",
         "symfony/expression-language": "*",
         "symfony/flex": "^1.3.1",
         "symfony/form": "*",
@@ -19,7 +20,6 @@
         "symfony/http-client": "*",
         "symfony/intl": "*",
         "symfony/mailer": "*",
-        "symfony/dotenv": "*",
         "symfony/mime": "*",
         "symfony/monolog-bundle": "^3.1",
         "symfony/notifier": "*",
@@ -27,6 +27,7 @@
         "symfony/process": "*",
         "symfony/runtime": "*",
         "symfony/security-bundle": "*",
+        "symfony/security-core": "*",
         "symfony/serializer-pack": "*",
         "symfony/string": "*",
         "symfony/translation": "*",
@@ -36,6 +37,7 @@
         "symfony/yaml": "*"
     },
     "require-dev": {
+        "doctrine/doctrine-fixtures-bundle": "^3.4",
         "symfony/debug-pack": "*",
         "symfony/maker-bundle": "^1.0",
         "symfony/profiler-pack": "*",
