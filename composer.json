@@ -28,6 +28,7 @@
         "symfony/runtime": "*",
         "symfony/security-bundle": "*",
         "symfony/security-core": "*",
+        "symfony/serializer": "*",
         "symfony/serializer-pack": "*",
         "symfony/string": "*",
         "symfony/translation": "*",
@@ -82,7 +83,7 @@
     },
     "extra": {
         "symfony": {
-            "allow-contrib": false,
+            "allow-contrib": true,
             "require": "*"
         }
     }

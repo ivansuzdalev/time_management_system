@@ -19,24 +19,23 @@ final class Version20210703190132 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $command = 'CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            user VARCHAR (255) NOT NULL,
-            pass VARCHAR (255) NOT NULL,
-            register_from datetime,
-            user_active INTEGER NOT NULL
-          )';
-        $this->addSql($command);
+
+        // this up() migration is auto-generated, please modify it to your needs
+        $this->addSql('CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, username VARCHAR(180) NOT NULL, roles CLOB NOT NULL --(DC2Type:json)
+        , password VARCHAR(255) NOT NULL)');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_8D93D649F85E0677 ON user (username)');
+        
 
         $command = 'CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY,
-                task_name  VARCHAR (255) NOT NULL,
-                completed  INTEGER NOT NULL,
                 start_from datetime,
-                end_to datetime,
-                project_id VARCHAR (255),
-                FOREIGN KEY (id)
-                REFERENCES users(id) ON UPDATE CASCADE
+                end_date_time datetime,
+                title  VARCHAR (255) NOT NULL,
+                comment TEXT NOT NULL, 
+                date_time_spent INTEGER,
+                user_id INTEGER NOT NULL, 
+                FOREIGN KEY (user_id)
+                REFERENCES user(id) ON UPDATE CASCADE
                                                 ON DELETE CASCADE)';
         // execute the sql commands to create new tables
         $this->addSql($command);
@@ -46,7 +45,7 @@ final class Version20210703190132 extends AbstractMigration
     public function down(Schema $schema): void
     {
         $command = 
-            'DROP TABLE users'
+            'DROP TABLE user'
           ;
         // execute the sql commands to create new tables
         $this->addSql($command);

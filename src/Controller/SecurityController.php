@@ -10,7 +10,8 @@ use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Doctrine\ORM\EntityManagerInterface;
-
+use App\Entity\User;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class SecurityController extends AbstractController
 {
@@ -45,9 +46,9 @@ class SecurityController extends AbstractController
      */
     public function register(Request $request, Security $security, UserPasswordEncoderInterface $passwordEncoder, EntityManagerInterface $entityManager)
     {
-            $email = $request->request->get('email');
+            $email = $request->get('email');
             $error = array();
-            $password = $request->request->get('password');
+            $password = $request->get('password');
 
             if($email && $password) {
                 
@@ -66,7 +67,8 @@ class SecurityController extends AbstractController
 
                     // actually executes the queries (i.e. the INSERT query)
                     $entityManager->flush();
-                    
+                    return new RedirectResponse('/');
+
                 }
  
 

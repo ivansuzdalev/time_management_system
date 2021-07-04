@@ -40,6 +40,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
+    
+    public function getUserId(): ?int
+    {
+        return $this->id;
+    }
     /**
      * @deprecated since Symfony 5.3, use getUserIdentifier instead
      */

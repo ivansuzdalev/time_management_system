@@ -8,4 +8,100 @@
     {% endif %}
 
     <h1 class="h3 mb-3 font-weight-normal">User: {{ username }} tasks</h1>
+    
+    <div>
+        <form method="post">
+
+            {% if app.user %}
+                <div class="mb-3">
+                    You are logged in as {{ app.user.username }}, <a href="{{ path('app_logout') }}">Logout</a>
+                </div>
+            {% endif %}
+
+            <label for="title">Title</label>
+            <input type="title" name="title" id="title" class="form-control" required>
+
+            <label for="comment">comment</label>
+            <input type="comment" name="comment" id="comment" class="form-control" required>
+
+            <label for="start_from">date</label>
+            <input type="date" name="start_from" id="start_from" class="form-control" required>
+
+            <label for="date_time_spent">date_time_spent</label>
+            <input type="date_time_spent" name="date_time_spent" id="date_time_spent" class="form-control" required>
+
+
+            <button class="btn btn-lg btn-primary" type="submit">
+                create
+            </button>
+        </form>
+    </div>
+
+    <div>
+        <form method="get" action="/export-user-tasks">
+            <a href="/export-user-tasks"></a>
+
+            <label for="date_from">date_from</label>
+            <input type="date" name="date_from" id="date_from" class="form-control" required>
+
+            <label for="date_to">date_to</label>
+            <input type="date" name="date_to" id="date_to" class="form-control" required>
+
+            <button class="btn btn-lg btn-primary" type="submit">
+                Export
+            </button>
+        </form>
+    </div>
+    <div>
+
+        <div class="row" style="margin-top: 20px;">
+        <table>
+            <tr>
+                <td><a href="/user-tasks?page=0"><span style="color:blue"><b>Begin</b></span></a></td><td>;</td>
+
+            {% for page_nr, limit in pagination_arr %}
+                {% if page == page_nr %}
+                    <td><a href="/user-tasks?page={{page_nr}}"><span style="color:red"><b>{{page_nr}}</b></span></a></td><td>;</td>
+                {% endif %}
+                {% if page != page_nr %}
+                    <td><a href="/user-tasks?page={{page_nr}}">{{page_nr}}</a></td><td>;</td>
+                {% endif %}
+            {% endfor %}
+
+                <td><a href="/user-tasks?page={{pages_count}}"><span style="color:blue"><b>End</b></span></a></td><td>;</td>
+            </tr>
+        </table>
+    </div>
+    <div class="row" style="margin-top: 20px;">
+        <table class="table table-dark" id="data-table">
+            <tr>
+                <th>id</th>
+                <th>startFrom</th>
+                <th>endDateTime</th>
+                <th>title</th>
+                <th>dateTimeSpent</th>
+                <th>Complete</th>
+            </tr>
+            {% for row in tasks_arr_ob %}
+                <tr>
+                    <td>{{row.id}}</td>  
+                    {% if row.startFrom %}
+                        <td>{{row.startFrom|date('Y-m-d H:i:s')}}</td> 
+                    {% else %}
+                        <td>-</td> 
+                    {% endif %}
+                    {% if row.endDateTime %}
+                        <td>{{row.endDateTime|date('Y-m-d H:i:s')}}</td>                  
+                    {% else %}
+                        <td>-</td> 
+                    {% endif %}
+                    <td>{{row.title}}</td>                  
+                    <td>{{row.dateTimeSpent}}</td>
+                    <td><a href="/complete-task?id={{row.id}}&page={{page}}">Complete</a></td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+
 {% endblock %}
