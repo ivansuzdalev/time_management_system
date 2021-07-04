@@ -4,8 +4,13 @@ namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Doctrine\ORM\EntityManagerInterface;
+
 
 class SecurityController extends AbstractController
 {
@@ -34,4 +39,53 @@ class SecurityController extends AbstractController
     {
         throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
     }
+
+    /**
+     * @Route("/register", name="app_register")
+     */
+    public function register(Request $request, Security $security, UserPasswordEncoderInterface $passwordEncoder, EntityManagerInterface $entityManager)
+    {
+            $email = $request->request->get('email');
+            $error = array();
+            $password = $request->request->get('password');
+
+            if($email && $password) {
+                
+                $user = $entityManager->getRepository(User::class)->findOneBy(['username' => $email]);
+                if($user) {
+                    $error = 'User exists';
+                } else {
+
+                    $new_user = new User();
+                    $new_user->setUsername($email);
+                    $encoded_password = $passwordEncoder->encodePassword($new_user, $password);
+                    $new_user->setPassword($encoded_password);
+                    $new_user->setRoles(['ROLE_USER']);
+
+                    $entityManager->persist($new_user);
+
+                    // actually executes the queries (i.e. the INSERT query)
+                    $entityManager->flush();
+                    
+                }
+ 
+
+            }
+            return $this->render('security/register.html.twig', [ 'error' => $error]); 
+    }
+
+    /**
+     * @Route("/login-register", name="login_register")
+     */
+    public function loginRegister(Security $security)
+    {
+        $error = '';
+        $userOb = $security->getUser();
+        if(!$userOb) {
+            return $this->render('security/login-register.html.twig', [ 'error' => $error]); 
+        } else {
+            return new RedirectResponse('/');
+        }
+    }
+    
 }

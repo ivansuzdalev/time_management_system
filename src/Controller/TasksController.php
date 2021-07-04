@@ -8,26 +8,31 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 
 
-class SiteController extends AbstractController
+class TasksController extends AbstractController
 {
     private $ob_manager;
 
     /**
-     * @Route("/")
+     * @Route("/user-tasks", name="user_tasks")
      */
-    public function index(Request $request, Security $security)
+    public function userTasks(Request $request, Security $security)
     {
+            $error = '';
             $userOb = $security->getUser();
             if(!$userOb) {
-                return new RedirectResponse('login-register');
+                return new RedirectResponse('/');
             } else {
-                return new RedirectResponse('user-tasks');
+                return $this->render('tasks/user-tasks.html.twig', [ 'error' => $error, 'username' => $userOb->getUserName()]); 
             }
             
     }
+
+    
 
 }

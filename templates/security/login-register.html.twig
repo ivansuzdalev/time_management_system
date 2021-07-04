@@ -1,0 +1,13 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Log in or register!{% endblock %}
+
+{% block body %}
+
+    <h1 class="h3 mb-3 font-weight-normal">Welcome</h1>
+    <a href="{{ path('app_login') }}">{{ 'Login' }}</a>
+    <a href="{{ path('app_register') }}">{{ 'Register' }}</a>
+
+    
+
+{% endblock %}
