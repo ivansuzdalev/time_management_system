@@ -14,6 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use App\Entity\Tasks;
 use App\Services\Csv;
+use App\Services\TasksService;
 
 
 class TasksController extends AbstractController
@@ -95,7 +96,7 @@ class TasksController extends AbstractController
 
                 $records_count = count($entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
 
-                $rows_count = $request->get('rows_count') ? $request->get('rows_count') : 5;;
+                $rows_count = $request->get('rows_count') ? $request->get('rows_count') : 5;
                 $page = $request->get('page') ? $request->get('page') : 0;
 
                 $pagination_arr = array();
@@ -129,53 +130,17 @@ class TasksController extends AbstractController
         if(!$userOb) {
             return new RedirectResponse('/');
         } else {
-            $keys_arr=array(
-                'id'
-            );
-            
-            $queryBuilder = $entityManager->createQueryBuilder();
-
+      
             $date_from = $request->get('date_from');
             $date_to = $request->get('date_to');
+
+            $tasks_service_ob = (new TasksService($entityManager));
+
+            $tasks_arr_ob = $tasks_service_ob->getTasksByUserPeriod($date_from, $date_to, $userOb->getId());
+
+            $tasks_arr = $tasks_service_ob->convertTasksObToArray($tasks_arr_ob);
             
-            $from = (new \DateTime($date_from))->format("Y-m-d")." 00:00:00";
-            $to   = (new \DateTime($date_to))->format("Y-m-d")." 23:59:59";
-    
-            $queryBuilder
-                ->select('e')
-                ->from('App\Entity\Tasks', 'e')
-                ->andWhere('e.startFrom BETWEEN :from AND :to')
-                ->setParameter('from', $from )
-                ->setParameter('to', $to)
-            ;
-            $tasks_arr_ob = $queryBuilder->getQuery()->getResult();
-
-            $tasks_arr = array();
-
-            foreach($tasks_arr_ob as $record){
-                $tasks_arr[] = array(
-                    'ID' =>$record->getId(),
-                    'StartFrom' => $record->getStartFrom()->format('Y-m-d H:i:s'),
-                    'EndDateTime' => $record->getEndDateTime() ? $record->getEndDateTime()->format('Y-m-d H:i:s'): '',
-                    'Title' => $record->getTitle(),
-                    'Comment' => $record->getComment(),
-                    'DateTimeSpent' => $record->getDateTimeSpent(),
-                );
-            }
-
-            $total_time = 0;
-            foreach($tasks_arr_ob as $record){
-                $date_time_from = $record->getStartFrom()->format('U');
-                if($record->getEndDateTime()){
-                    $date_time_to = $record->getEndDateTime()->format('U');
-                } else {
-                    $date_time_to =(new  \DateTime())->format('U');
-                }
-                $interval = $date_time_to - $date_time_from;
-
-                $total_time = $total_time + $interval;
-            }
-            
+            $total_time = $tasks_service_ob->calculateTasksTotalTime($tasks_arr_ob);
 
             Csv::outputCSV($tasks_arr);
             
