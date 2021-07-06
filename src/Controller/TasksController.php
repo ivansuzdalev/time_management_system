@@ -24,7 +24,7 @@ class TasksController extends AbstractController
     /**
      * @Route("/user-tasks", name="user_tasks")
      */
-    public function userTasks(Request $request, Security $security)
+    public function userTasks(Request $request, Security $security, EntityManagerInterface $entityManager)
     {
             $error = '';
             $userOb = $security->getUser();
@@ -32,12 +32,34 @@ class TasksController extends AbstractController
                 return new RedirectResponse('/');
             } else {
 
-                return $this->render('tasks/user-tasks.html.twig', [ 'error' => $error, 'username' => $userOb->getUserName()]); 
+                $records_count = count($entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
+
+                $rows_count = $request->get('rows_count') ? $request->get('rows_count') : 5;
+                $page = $request->get('page') ? $request->get('page') : 0;
+
+                $pagination_arr = array();
+                $from = 0;
+                $to = 0;
+                
+                $pages_count = (int)($records_count/$rows_count);
+                if ($page < 10) $from = 0;
+                else $from = $page - 10;
+        
+                if ($page > $pages_count - 10) $to = $pages_count;
+                else $to = $page + 10;
+                for ($i=$from;$i<=$to;$i++){
+                    $pagination_arr[$i]=$i;
+                }
+    
+                $tasks_arr_ob = $entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null, $limit = $rows_count, $offset = $rows_count*$page);
+
+                return $this->render('tasks/user-tasks.html.twig', ['pages_count'=>$pages_count, 'page'=>$page, 'pagination_arr'=>$pagination_arr, 'tasks_arr_ob' => $tasks_arr_ob, 'error' => $error, 'username' => $userOb->getUserName()]); 
+        
             }
             
     }
 
- /**
+    /**
      * @Route("/complete-task", name="complete_task")
      */
     public function completeTask(Request $request, Security $security, EntityManagerInterface $entityManager)
@@ -66,7 +88,7 @@ class TasksController extends AbstractController
 
 
     /**
-     * @Route("/user-tasks", name="user_tasks")
+     * @Route("/create-task", name="create_task")
      */
     public function createTasks(Request $request, Security $security, EntityManagerInterface $entityManager)
     {
@@ -92,38 +114,20 @@ class TasksController extends AbstractController
                     $task->setDateTimeSpent($date_time_spent);
                     $entityManager->persist($task);
                     $entityManager->flush();
+                    return new RedirectResponse('/user-tasks');
                 }
 
-                $records_count = count($entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
+                return new RedirectResponse('/');
 
-                $rows_count = $request->get('rows_count') ? $request->get('rows_count') : 5;
-                $page = $request->get('page') ? $request->get('page') : 0;
-
-                $pagination_arr = array();
-                $from = 0;
-                $to = 0;
-                
-                $pages_count = (int)($records_count/$rows_count);
-                if ($page < 10) $from = 0;
-                else $from = $page - 10;
-        
-                if ($page > $pages_count - 10) $to = $pages_count;
-                else $to = $page + 10;
-                for ($i=$from;$i<=$to;$i++){
-                    $pagination_arr[$i]=$i;
-                }
-    
-                $tasks_arr_ob = $entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null, $limit = $rows_count, $offset = $rows_count*$page);
-
-                return $this->render('tasks/user-tasks.html.twig', ['pages_count'=>$pages_count, 'page'=>$page, 'pagination_arr'=>$pagination_arr, 'tasks_arr_ob' => $tasks_arr_ob, 'error' => $error, 'username' => $userOb->getUserName()]); 
             }
             
     }
 
+    
     /**
-     * @Route("/export-user-tasks")
+     * @Route("/export-tasks")
      */
-    public function exportUserTasks(Request $request, Security $security, EntityManagerInterface $entityManager)
+    public function exportTasks(Request $request, Security $security, EntityManagerInterface $entityManager)
     {
         $error = '';
         $userOb = $security->getUser();
@@ -157,6 +161,53 @@ class TasksController extends AbstractController
         }
     }
 
-    
+    /**
+     * @Route("/user-task-create", name="user_task_create")
+     */
+    public function userTaskCreate(Request $request, Security $security, EntityManagerInterface $entityManager)
+    {
+            $error = '';
+            $userOb = $security->getUser();
+            if(!$userOb) {
+                return new RedirectResponse('/');
+            } else {
 
+                $title = $request->get('title');
+                $comment = $request->get('comment');
+                $start_from = $request->get('start_from');
+                $date_time_spent = $request->get('date_time_spent');
+
+                if($title && $comment && $start_from && $date_time_spent){
+                    $task = new Tasks();
+                    $task->setTitle($title);
+                    $task->setComment($comment);
+                    $task->setDateTimeSpent($date_time_spent);
+                    $task->setUser($userOb);
+                    $date_from_ob = new \DateTime($start_from);
+                    $task->setStartFrom($date_from_ob);
+                    $task->setDateTimeSpent($date_time_spent);
+                    $entityManager->persist($task);
+                    $entityManager->flush();
+                }
+    
+                return $this->render('tasks/user-task-create.html.twig', ['error'=>$error, 'username' => $userOb->getUserName()]); 
+            }
+            
+    }
+
+    /**
+     * @Route("/user-tasks-export", name="user_tasks_export")
+     */
+    public function userTaskExport(Request $request, Security $security, EntityManagerInterface $entityManager)
+    {
+            $error = '';
+            $userOb = $security->getUser();
+            if(!$userOb) {
+                return new RedirectResponse('/');
+            } else {
+    
+                return $this->render('tasks/user-tasks-export.html.twig', ['error'=>$error, 'username' => $userOb->getUserName()]); 
+            }
+            
+    }
 }

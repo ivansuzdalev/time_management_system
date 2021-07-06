@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create Task{% endblock %}
+
+{% block body %}
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <div class="container fill">
+
+        <h1 class="h3 mb-3 font-weight-normal">User: {{ username }} tasks create</h1>
+        
+        <div>
+            <form method="post" action="{{ path('create_task') }}">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="title" name="title" id="title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="comment">comment</label>
+                    <input type="comment" name="comment" id="comment" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="start_from">date</label>
+                    <input type="date" name="start_from" id="start_from" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="date_time_spent">date_time_spent</label>
+                    <input type="date_time_spent" name="date_time_spent" id="date_time_spent" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-lg btn-primary" type="submit">
+                        create
+                    </button>
+                </div>
+            </form>
+        </div>
+    
+    </div>
+
+
+{% endblock %}
