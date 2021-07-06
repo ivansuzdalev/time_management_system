@@ -13,7 +13,7 @@ class TasksService
 
     }
 
-    public function getTasksByUserPeriod(string $date_from, string $date_to, string $user_id): ?array
+    public function getTasksByUserPeriod(string $user_id, string $date_from, string $date_to): ?array
     {
         $queryBuilder = $this->entityManager->createQueryBuilder();
 
@@ -23,14 +23,16 @@ class TasksService
         $queryBuilder
             ->select('e')
             ->from('App\Entity\Tasks', 'e')
-            ->andWhere('e.startFrom BETWEEN :from AND :to')
-            ->andWhere('user.id = :user_id')
+            ->andWhere('e.user = :user_id')
             ->leftJoin('App\Entity\User', 'user', \Doctrine\ORM\Query\Expr\Join::WITH,'user = user.id')
-            ->setParameter('from', $from )
-            ->setParameter('to', $to)
             ->setParameter('user_id', $user_id)
         ;
-
+        if($date_from && $date_to) {
+            $queryBuilder
+            ->andWhere('e.startFrom BETWEEN :from AND :to')
+            ->setParameter('from', $from )
+            ->setParameter('to', $to);
+        }
         $tasks_arr_ob = $queryBuilder->getQuery()->getResult();
 
         if($tasks_arr_ob){

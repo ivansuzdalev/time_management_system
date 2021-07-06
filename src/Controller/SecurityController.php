@@ -12,6 +12,8 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\User;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use App\Security\LoginFormAuthenticator;
+use Symfony\Component\Security\Guard\GuardAuthenticatorHandler;
 
 class SecurityController extends AbstractController
 {
@@ -44,7 +46,14 @@ class SecurityController extends AbstractController
     /**
      * @Route("/register", name="app_register")
      */
-    public function register(Request $request, Security $security, UserPasswordEncoderInterface $passwordEncoder, EntityManagerInterface $entityManager)
+    public function register(
+        Request $request, 
+        Security $security, 
+        UserPasswordEncoderInterface $passwordEncoder, 
+        EntityManagerInterface $entityManager,         
+        LoginFormAuthenticator $loginAuthenticator,
+        GuardAuthenticatorHandler $guard
+    )
     {
             $email = $request->get('email');
             $error = array();
@@ -67,7 +76,13 @@ class SecurityController extends AbstractController
 
                     // actually executes the queries (i.e. the INSERT query)
                     $entityManager->flush();
-                    return new RedirectResponse('/');
+                    //return new RedirectResponse('/');
+                    return $guard->authenticateUserAndHandleSuccess(
+                        $new_user,
+                        $request,
+                        $loginAuthenticator,
+                        'main'
+                    );
 
                 }
  
