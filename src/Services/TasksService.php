@@ -2,6 +2,7 @@
 namespace App\Services;
 
 use Doctrine\ORM\EntityManagerInterface;
+use App\Entity\Tasks;
 
 class TasksService
 {
@@ -13,6 +14,27 @@ class TasksService
 
     }
 
+    public function writeTask(string $title, string $comment, string $startFrom, string $dateTimeSpent, object $userOb): ? bool
+    {
+
+        if($title && $comment && $startFrom && $dateTimeSpent){
+        
+            $task = new Tasks();
+            $task->setTitle($title);
+            $task->setComment($comment);
+            $task->setDateTimeSpent($dateTimeSpent);
+            $task->setUser($userOb);
+            $dateFromOb = new \DateTime($startFrom);
+            $task->setStartFrom($dateFromOb);
+            $task->setDateTimeSpent($dateTimeSpent);
+            $this->entityManager->persist($task);
+            return $this->entityManager->flush();
+        }
+
+        return false;
+    
+    }
+    
     public function getTasksByUserPeriod(string $user_id, string $date_from, string $date_to): ?array
     {
         $queryBuilder = $this->entityManager->createQueryBuilder();

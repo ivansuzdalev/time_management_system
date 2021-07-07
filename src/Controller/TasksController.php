@@ -20,11 +20,17 @@ use Symfony\Component\HttpFoundation\Session\Session;
 
 class TasksController extends AbstractController
 {
+    private $entityManager;
+    
+    public function __construct(EntityManagerInterface $entityManager)
+    {
+        $this->entityManager = $entityManager;
+    }
 
     /**
      * @Route("/user-tasks", name="user_tasks")
      */
-    public function userTasks(Request $request, Security $security, EntityManagerInterface $entityManager, Session $session)
+    public function userTasks(Request $request, Security $security, Session $session)
     {
             $error = '';
             $userOb = $security->getUser();
@@ -32,7 +38,7 @@ class TasksController extends AbstractController
                 return new RedirectResponse('/');
             } else {
 
-                $recordsCount = count($entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
+                $recordsCount = count($this->entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
 
                 $rowsCount = $request->get('rowsCount');
                 $page = $request->get('page');
@@ -40,6 +46,7 @@ class TasksController extends AbstractController
                 if(!$rowsCount && !$session->get('rowsCount')) $rowsCount = 5;
                 if(!$page && !$session->get('page')) $page = 1;
 
+                /* session */
                 if($page) {
                     $session->set('page', $page);
                 } else {
@@ -52,6 +59,7 @@ class TasksController extends AbstractController
                     $rowsCount = $session->get('rowsCount');
                 }
                 
+                /* Pagination */
                 $paginationArr = array();
                 $from = 1;
                 $to = 1;
@@ -71,7 +79,7 @@ class TasksController extends AbstractController
                 }
                 
 
-                $tasksArrOb = $entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null, $limit = $rowsCount, $offset = $rowsCount*($page-1));
+                $tasksArrOb = $this->entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null, $limit = $rowsCount, $offset = $rowsCount*($page-1));
 
                 return $this->render('tasks/user-tasks.html.twig', ['pagesCount'=>$pagesCount, 'rowsCount'=>$rowsCount, 'page'=>$page, 'paginationArr'=>$paginationArr, 'tasksArrOb' => $tasksArrOb, 'error' => $error, 'username' => $userOb->getUserName()]); 
         
@@ -82,7 +90,7 @@ class TasksController extends AbstractController
     /**
      * @Route("/complete-task", name="complete_task")
      */
-    public function completeTask(Request $request, Security $security, EntityManagerInterface $entityManager, Session $session)
+    public function completeTask(Request $request, Security $security, Session $session)
     {
             $error = '';
             $userOb = $security->getUser();
@@ -110,13 +118,13 @@ class TasksController extends AbstractController
                 
                 if($id){
                     
-                    $task = $entityManager->getRepository(Tasks::class)->findOneBy(['id' => $id]);
+                    $task = $this->entityManager->getRepository(Tasks::class)->findOneBy(['id' => $id]);
          
                     if($task){
                         $taskEndDateTime = new \DateTime();
                         $task->setEndDateTime($taskEndDateTime);
-                        $entityManager->persist($task);
-                        $entityManager->flush();
+                        $this->entityManager->persist($task);
+                        $this->entityManager->flush();
                     }
                 }
                 return new RedirectResponse('/user-tasks?page='.$page.'&rowsCount='.$rowsCount);
@@ -127,7 +135,7 @@ class TasksController extends AbstractController
     /**
      * @Route("/create-task", name="create_task")
      */
-    public function createTasks(Request $request, Security $security, EntityManagerInterface $entityManager)
+    public function createTasks(Request $request, Security $security, TasksService $tasksServiceOb)
     {
             $error = '';
             $userOb = $security->getUser();
@@ -141,18 +149,9 @@ class TasksController extends AbstractController
                 $dateTimeSpent = $request->get('dateTimeSpent');
 
                 if($title && $comment && $startFrom && $dateTimeSpent){
-                    $task = new Tasks();
-                    $task->setTitle($title);
-                    $task->setComment($comment);
-                    $task->setDateTimeSpent($dateTimeSpent);
-                    $task->setUser($userOb);
-                    $dateFromOb = new \DateTime($startFrom);
-                    $task->setStartFrom($dateFromOb);
-                    $task->setDateTimeSpent($dateTimeSpent);
-                    $entityManager->persist($task);
-                    $entityManager->flush();
+                    $tasksServiceOb->writeTask($title, $comment, $startFrom, $dateTimeSpent, $userOb);    
                     return new RedirectResponse('/user-tasks');
-                }
+                }              
 
                 return new RedirectResponse('/');
 
@@ -164,7 +163,7 @@ class TasksController extends AbstractController
     /**
      * @Route("/export-tasks")
      */
-    public function exportTasks(Request $request, Security $security, EntityManagerInterface $entityManager)
+    public function exportTasks(Request $request, Security $security)
     {
         $error = '';
         $userOb = $security->getUser();
@@ -172,28 +171,30 @@ class TasksController extends AbstractController
             return new RedirectResponse('/');
         } else {
       
-            $dataFrom = $request->get('dataFrom');
-            $dataTo = $request->get('dataTo');
+            $dateFrom = $request->get('dateFrom');
+            $dateTo = $request->get('dateTo');
+            if($dateFrom){
+                $tasksServiceOb = (new TasksService($this->entityManager));
 
-            $tasksServiceOb = (new TasksService($entityManager));
-
-            $tasksArrOb = $tasksServiceOb->getTasksByUserPeriod($userOb->getId(), $dataFrom, $dataTo);
-
-            $tasksArr = $tasksServiceOb->convertTasksObToArray($tasksArrOb);
+                $tasksArrOb = $tasksServiceOb->getTasksByUserPeriod($userOb->getId(), $dateFrom, $dateTo);
+    
+                $tasksArr = $tasksServiceOb->convertTasksObToArray($tasksArrOb);
+                
+                $totalTime = $tasksServiceOb->calculateTasksTotalTime($tasksArrOb);
+    
+                Csv::outputCSV($tasksArr);
+                
+                $totalTimeArr = array(
+                    ['Name'=>'Total Time in minutes', 'totaltime'=>$totalTime]
+                );
+                Csv::outputCSV($totalTimeArr, false);
+    
+                $response = new Response();
+                $response->headers->set('Content-Type', 'text/csv');
+                $response->headers->set('Content-Disposition', 'attachment; filename="taks-export.csv"');
+                return $response;
+            }
             
-            $totalTime = $tasksServiceOb->calculateTasksTotalTime($tasksArrOb);
-
-            Csv::outputCSV($tasksArr);
-            
-            $totalTimeArr = array(
-                ['Name'=>'Total Time', 'total time'=>$totalTime]
-            );
-            Csv::outputCSV($totalTimeArr, false);
-
-            $response = new Response();
-            $response->headers->set('Content-Type', 'text/csv');
-            $response->headers->set('Content-Disposition', 'attachment; filename="taks-export.csv"');
-            return $response;
         }
     }
 
@@ -208,24 +209,6 @@ class TasksController extends AbstractController
                 return new RedirectResponse('/');
             } else {
 
-                $title = $request->get('title');
-                $comment = $request->get('comment');
-                $startFrom = $request->get('startFrom');
-                $dateTimeSpent = $request->get('dateTimeSpent');
-
-                if($title && $comment && $startFrom && $dateTimeSpent){
-                    $task = new Tasks();
-                    $task->setTitle($title);
-                    $task->setComment($comment);
-                    $task->setDateTimeSpent($dateTimeSpent);
-                    $task->setUser($userOb);
-                    $dateFromOb = new \DateTime($startFrom);
-                    $task->setStartFrom($dateFromOb);
-                    $task->setDateTimeSpent($dateTimeSpent);
-                    $entityManager->persist($task);
-                    $entityManager->flush();
-                }
-    
                 return $this->render('tasks/user-task-create.html.twig', ['error'=>$error, 'username' => $userOb->getUserName()]); 
             }
             

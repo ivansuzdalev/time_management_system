@@ -5,9 +5,10 @@
 {% block body %}
     <script>
     $(document).ready(function(){
-        $('#rows_count').change(function(){
-            var rows_count = $('#rows_count option:selected').text();
-            window.location.href = '/user-tasks?page={{page|json_encode()}}&rows_count=' + rows_count;            
+        $('#rowsCount').change(function(){
+            var rowsCount = $('#rowsCount option:selected').text();
+            console.log({{page}});
+            window.location.href = '/user-tasks?page=1&rowsCount=' + rowsCount;            
         });
     });
     </script>
@@ -23,26 +24,26 @@
             <div class="row" style="margin-top: 20px;">
             <table>
                 <tr>
-                    <td><a href="/user-tasks?page=0&rows_count={{rows_count}}"><span style="color:blue"><b>Begin</b></span></a></td><td>;</td>
+                    <td><a href="/user-tasks?page=0&rowsCount={{rowsCount}}"><span style="color:blue"><b>Begin</b></span></a></td><td>;</td>
 
-                {% for page_nr, limit in pagination_arr %}
-                    {% if page == page_nr %}
-                        <td><a href="/user-tasks?page={{page_nr}}&rows_count={{rows_count}}"><span style="color:red"><b>{{page_nr}}</b></span></a></td><td>;</td>
+                {% for pageNr, limit in paginationArr %}
+                    {% if page == pageNr %}
+                        <td><a href="/user-tasks?page={{pageNr}}&rowsCount={{rowsCount}}"><span style="color:red"><b>{{pageNr}}</b></span></a></td><td>;</td>
                     {% endif %}
-                    {% if page != page_nr %}
-                        <td><a href="/user-tasks?page={{page_nr}}&rows_count={{rows_count}}">{{page_nr}}</a></td><td>;</td>
+                    {% if page != pageNr %}
+                        <td><a href="/user-tasks?page={{pageNr}}&rowsCount={{rowsCount}}">{{pageNr}}</a></td><td>;</td>
                     {% endif %}
                 {% endfor %}
 
-                    <td><a href="/user-tasks?page={{pages_count}}&rows_count={{rows_count}}"><span style="color:blue"><b>End</b></span></a></td><td>;</td>
+                    <td><a href="/user-tasks?page={{pagesCount}}&rowsCount={{rowsCount}}"><span style="color:blue"><b>End</b></span></a></td><td>;</td>
                 </tr>
             </table>
 
-            <select name="rows_count" id="rows_count">
-                <option value="5" {% if rows_count == 5 %}{{'selected'}}{% endif %}>5</option>
-                <option value="10" {% if rows_count == 10 %}{{'selected'}}{% endif %}>10</option>
-                <option value="20" {% if rows_count == 20 %}{{'selected'}}{% endif %}>20</option>
-                <option value="100" {% if rows_count == 100 %}{{'selected'}}{% endif %}>100</option>
+            <select name="rowsCount" id="rowsCount">
+                <option value="5" {% if rowsCount == 5 %}{{'selected'}}{% endif %}>5</option>
+                <option value="10" {% if rowsCount == 10 %}{{'selected'}}{% endif %}>10</option>
+                <option value="20" {% if rowsCount == 20 %}{{'selected'}}{% endif %}>20</option>
+                <option value="100" {% if rowsCount == 100 %}{{'selected'}}{% endif %}>100</option>
             </select>
 
         </div>
@@ -54,9 +55,10 @@
                     <th>endDateTime</th>
                     <th>title</th>
                     <th>dateTimeSpent</th>
+                    <th>Coments</th>
                     <th>Complete</th>
                 </tr>
-                {% for row in tasks_arr_ob %}
+                {% for row in tasksArrOb %}
                     <tr>
                         <td>{{row.id}}</td>  
                         {% if row.startFrom %}
@@ -71,10 +73,11 @@
                         {% endif %}
                         <td>{{row.title}}</td>                  
                         <td>{{row.dateTimeSpent}}</td>
+                        <td>{{row.comment}}</td>
                         {% if row.endDateTime %}    
                             <td>&#x2713;</td>
                         {% else %}
-                            <td><a href="/complete-task?id={{row.id}}&page={{page}}&rows_count={{rows_count}}">Complete</a></td>
+                            <td><a href="/complete-task?id={{row.id}}&page={{page}}&rowsCount={{rowsCount}}">Complete</a></td>
                         {% endif %}
                     </tr>
                 {% endfor %}
