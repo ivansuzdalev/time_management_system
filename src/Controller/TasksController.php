@@ -20,7 +20,6 @@ use Symfony\Component\HttpFoundation\Session\Session;
 
 class TasksController extends AbstractController
 {
-    private $ob_manager;
 
     /**
      * @Route("/user-tasks", name="user_tasks")
@@ -33,12 +32,12 @@ class TasksController extends AbstractController
                 return new RedirectResponse('/');
             } else {
 
-                $records_count = count($entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
+                $recordsCount = count($entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null));
 
-                $rows_count = $request->get('rows_count');
+                $rowsCount = $request->get('rowsCount');
                 $page = $request->get('page');
 
-                if(!$rows_count && !$session->get('rows_count')) $rows_count = 5;
+                if(!$rowsCount && !$session->get('rowsCount')) $rowsCount = 5;
                 if(!$page && !$session->get('page')) $page = 1;
 
                 if($page) {
@@ -47,34 +46,34 @@ class TasksController extends AbstractController
                     $page = $session->get('page');
                 }
 
-                if($rows_count) {
-                    $session->set('rows_count', $rows_count);
+                if($rowsCount) {
+                    $session->set('rowsCount', $rowsCount);
                 } else {
-                    $rows_count = $session->get('rows_count');
+                    $rowsCount = $session->get('rowsCount');
                 }
                 
-                $pagination_arr = array();
+                $paginationArr = array();
                 $from = 1;
                 $to = 1;
                 
-                $pages_count = (int)($records_count/$rows_count)+1;
+                $pagesCount = (int)($recordsCount/$rowsCount)+1;
                 
-                if($records_count > 0 && $records_count % $rows_count == 0) $pages_count = $pages_count - 1;
+                if($recordsCount > 0 && $recordsCount % $rowsCount == 0) $pagesCount = $pagesCount - 1;
 
                 if ($page < 10) $from = 1;
                 else $from = $page - 10;
         
-                if ($page > $pages_count - 10) $to = $pages_count;
+                if ($page > $pagesCount - 10) $to = $pagesCount;
                 else $to = $page + 10;
                 
                 for ($i=$from;$i<=$to;$i++){
-                    $pagination_arr[$i]=$i;
+                    $paginationArr[$i]=$i;
                 }
                 
 
-                $tasks_arr_ob = $entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null, $limit = $rows_count, $offset = $rows_count*($page-1));
+                $tasksArrOb = $entityManager->getRepository(Tasks::class)->findByUser(['user_id' => $userOb->getUserId()], $orderBy = null, $limit = $rowsCount, $offset = $rowsCount*($page-1));
 
-                return $this->render('tasks/user-tasks.html.twig', ['pages_count'=>$pages_count, 'rows_count'=>$rows_count, 'page'=>$page, 'pagination_arr'=>$pagination_arr, 'tasks_arr_ob' => $tasks_arr_ob, 'error' => $error, 'username' => $userOb->getUserName()]); 
+                return $this->render('tasks/user-tasks.html.twig', ['pagesCount'=>$pagesCount, 'rowsCount'=>$rowsCount, 'page'=>$page, 'paginationArr'=>$paginationArr, 'tasksArrOb' => $tasksArrOb, 'error' => $error, 'username' => $userOb->getUserName()]); 
         
             }
             
@@ -93,7 +92,7 @@ class TasksController extends AbstractController
 
                 $id = $request->get('id');
                 $page = $request->get('page');
-                $rows_count = $request->get('rows_count');
+                $rowsCount = $request->get('rowsCount');
                 
                 if($page) {
                     $session->set('page', $page);
@@ -101,10 +100,10 @@ class TasksController extends AbstractController
                     $page = $session->get('page');
                 }
 
-                if($rows_count) {
-                    $session->set('rows_count', $rows_count);
+                if($rowsCount) {
+                    $session->set('rowsCount', $rowsCount);
                 } else {
-                    $rows_count = $session->get('rows_count');
+                    $rowsCount = $session->get('rowsCount');
                 }
                 
 
@@ -114,13 +113,13 @@ class TasksController extends AbstractController
                     $task = $entityManager->getRepository(Tasks::class)->findOneBy(['id' => $id]);
          
                     if($task){
-                        $task_end_date_time = new \DateTime();
-                        $task->setEndDateTime($task_end_date_time);
+                        $taskEndDateTime = new \DateTime();
+                        $task->setEndDateTime($taskEndDateTime);
                         $entityManager->persist($task);
                         $entityManager->flush();
                     }
                 }
-                return new RedirectResponse('/user-tasks?page='.$page.'&rows_count='.$rows_count);
+                return new RedirectResponse('/user-tasks?page='.$page.'&rowsCount='.$rowsCount);
             }
     }
 
@@ -138,18 +137,18 @@ class TasksController extends AbstractController
 
                 $title = $request->get('title');
                 $comment = $request->get('comment');
-                $start_from = $request->get('start_from');
-                $date_time_spent = $request->get('date_time_spent');
+                $startFrom = $request->get('startFrom');
+                $dateTimeSpent = $request->get('dateTimeSpent');
 
-                if($title && $comment && $start_from && $date_time_spent){
+                if($title && $comment && $startFrom && $dateTimeSpent){
                     $task = new Tasks();
                     $task->setTitle($title);
                     $task->setComment($comment);
-                    $task->setDateTimeSpent($date_time_spent);
+                    $task->setDateTimeSpent($dateTimeSpent);
                     $task->setUser($userOb);
-                    $date_from_ob = new \DateTime($start_from);
-                    $task->setStartFrom($date_from_ob);
-                    $task->setDateTimeSpent($date_time_spent);
+                    $dateFromOb = new \DateTime($startFrom);
+                    $task->setStartFrom($dateFromOb);
+                    $task->setDateTimeSpent($dateTimeSpent);
                     $entityManager->persist($task);
                     $entityManager->flush();
                     return new RedirectResponse('/user-tasks');
@@ -173,23 +172,23 @@ class TasksController extends AbstractController
             return new RedirectResponse('/');
         } else {
       
-            $date_from = $request->get('date_from');
-            $date_to = $request->get('date_to');
+            $dataFrom = $request->get('dataFrom');
+            $dataTo = $request->get('dataTo');
 
-            $tasks_service_ob = (new TasksService($entityManager));
+            $tasksServiceOb = (new TasksService($entityManager));
 
-            $tasks_arr_ob = $tasks_service_ob->getTasksByUserPeriod($userOb->getId(), $date_from, $date_to);
+            $tasksArrOb = $tasksServiceOb->getTasksByUserPeriod($userOb->getId(), $dataFrom, $dataTo);
 
-            $tasks_arr = $tasks_service_ob->convertTasksObToArray($tasks_arr_ob);
+            $tasksArr = $tasksServiceOb->convertTasksObToArray($tasksArrOb);
             
-            $total_time = $tasks_service_ob->calculateTasksTotalTime($tasks_arr_ob);
+            $totalTime = $tasksServiceOb->calculateTasksTotalTime($tasksArrOb);
 
-            Csv::outputCSV($tasks_arr);
+            Csv::outputCSV($tasksArr);
             
-            $total_time_arr = array(
-                ['Name'=>'Total Time', 'total time'=>$total_time]
+            $totalTimeArr = array(
+                ['Name'=>'Total Time', 'total time'=>$totalTime]
             );
-            Csv::outputCSV($total_time_arr, false);
+            Csv::outputCSV($totalTimeArr, false);
 
             $response = new Response();
             $response->headers->set('Content-Type', 'text/csv');
@@ -211,18 +210,18 @@ class TasksController extends AbstractController
 
                 $title = $request->get('title');
                 $comment = $request->get('comment');
-                $start_from = $request->get('start_from');
-                $date_time_spent = $request->get('date_time_spent');
+                $startFrom = $request->get('startFrom');
+                $dateTimeSpent = $request->get('dateTimeSpent');
 
-                if($title && $comment && $start_from && $date_time_spent){
+                if($title && $comment && $startFrom && $dateTimeSpent){
                     $task = new Tasks();
                     $task->setTitle($title);
                     $task->setComment($comment);
-                    $task->setDateTimeSpent($date_time_spent);
+                    $task->setDateTimeSpent($dateTimeSpent);
                     $task->setUser($userOb);
-                    $date_from_ob = new \DateTime($start_from);
-                    $task->setStartFrom($date_from_ob);
-                    $task->setDateTimeSpent($date_time_spent);
+                    $dateFromOb = new \DateTime($startFrom);
+                    $task->setStartFrom($dateFromOb);
+                    $task->setDateTimeSpent($dateTimeSpent);
                     $entityManager->persist($task);
                     $entityManager->flush();
                 }

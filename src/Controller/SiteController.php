@@ -14,8 +14,6 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class SiteController extends AbstractController
 {
-    private $ob_manager;
-
     /**
      * @Route("/")
      */

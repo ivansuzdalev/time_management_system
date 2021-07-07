@@ -66,19 +66,19 @@ class SecurityController extends AbstractController
                     $error = 'User exists';
                 } else {
 
-                    $new_user = new User();
-                    $new_user->setUsername($email);
-                    $encoded_password = $passwordEncoder->encodePassword($new_user, $password);
-                    $new_user->setPassword($encoded_password);
-                    $new_user->setRoles(['ROLE_USER']);
+                    $newUser = new User();
+                    $newUser->setUsername($email);
+                    $encodedPassword = $passwordEncoder->encodePassword($newUser, $password);
+                    $newUser->setPassword($encodedPassword);
+                    $newUser->setRoles(['ROLE_USER']);
 
-                    $entityManager->persist($new_user);
+                    $entityManager->persist($newUser);
 
                     // actually executes the queries (i.e. the INSERT query)
                     $entityManager->flush();
                     //return new RedirectResponse('/');
                     return $guard->authenticateUserAndHandleSuccess(
-                        $new_user,
+                        $newUser,
                         $request,
                         $loginAuthenticator,
                         'main'
