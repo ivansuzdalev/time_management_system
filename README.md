@@ -12,7 +12,7 @@ date range.
 * If logged in user don't complete the task,this task time caltulating between task date from and current dati time
 * Short description in readme file describing how to set up project
 
-## Instalation
+## Installation
 * Clone git repository with command 
   * ```git clone https://github.com/ivansuzdalev/time_management_system.git ```
 * Install sqlite3 driver on your operation system. Example in ubuntu: 
