@@ -19,7 +19,6 @@ date range.
   * ```sudo apt update```  
   * ```sudo apt install sqlite3```
   * Restart you symfony server or you http server
-* 
 
 
 ### General folders and files structure in project
