@@ -2,16 +2,22 @@
 namespace App\Services;
 
 use Doctrine\ORM\EntityManagerInterface;
-use App\Entity\Tasks;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class TasksService
 {
     private $entityManager;
-    
+    private $tasks;
+
     public function __construct(EntityManagerInterface $entityManager)
     {
         $this->entityManager = $entityManager;
 
+        $containerBuilder = new ContainerBuilder();
+        $containerBuilder
+            ->register('tasks_repository', 'App\Entity\Tasks');
+        $this->tasks = $containerBuilder->get('tasks_repository');
+        
     }
 
     public function writeTask(string $title, string $comment, string $startFrom, string $dateTimeSpent, object $userOb): ? bool
@@ -19,15 +25,14 @@ class TasksService
 
         if($title && $comment && $startFrom && $dateTimeSpent){
         
-            $task = new Tasks();
-            $task->setTitle($title);
-            $task->setComment($comment);
-            $task->setDateTimeSpent($dateTimeSpent);
-            $task->setUser($userOb);
+            $this->tasks->setTitle($title);
+            $this->tasks->setComment($comment);
+            $this->tasks->setDateTimeSpent($dateTimeSpent);
+            $this->tasks->setUser($userOb);
             $dateFromOb = new \DateTime($startFrom);
-            $task->setStartFrom($dateFromOb);
-            $task->setDateTimeSpent($dateTimeSpent);
-            $this->entityManager->persist($task);
+            $this->tasks->setStartFrom($dateFromOb);
+            $this->tasks->setDateTimeSpent($dateTimeSpent);
+            $this->entityManager->persist($this->tasks);
             return $this->entityManager->flush();
         }
 
@@ -35,42 +40,42 @@ class TasksService
     
     }
     
-    public function getTasksByUserPeriod(string $user_id, string $date_from, string $date_to): ?array
+    public function getTasksByUserPeriod(string $userId, string $dateFrom, string $dateTo): ?array
     {
         $queryBuilder = $this->entityManager->createQueryBuilder();
 
-        $from = (new \DateTime($date_from))->format("Y-m-d")." 00:00:00";
-        $to   = (new \DateTime($date_to))->format("Y-m-d")." 23:59:59";
+        $from = (new \DateTime($dateFrom))->format("Y-m-d")." 00:00:00";
+        $to   = (new \DateTime($dateTo))->format("Y-m-d")." 23:59:59";
 
         $queryBuilder
             ->select('e')
             ->from('App\Entity\Tasks', 'e')
-            ->andWhere('e.user = :user_id')
+            ->andWhere('e.user = :userId')
             ->leftJoin('App\Entity\User', 'user', \Doctrine\ORM\Query\Expr\Join::WITH,'user = user.id')
-            ->setParameter('user_id', $user_id)
+            ->setParameter('userId', $userId)
         ;
-        if($date_from && $date_to) {
+        if($dateFrom && $dateTo) {
             $queryBuilder
             ->andWhere('e.startFrom BETWEEN :from AND :to')
             ->setParameter('from', $from )
             ->setParameter('to', $to);
         }
-        $tasks_arr_ob = $queryBuilder->getQuery()->getResult();
+        $tasksArrOb = $queryBuilder->getQuery()->getResult();
 
-        if($tasks_arr_ob){
-            return $tasks_arr_ob;
+        if($tasksArrOb){
+            return $tasksArrOb;
         } else {
             return array();
         }
 
     }
 
-    public function convertTasksObToArray(array $tasks_arr_ob): ?array
+    public function convertTasksObToArray(array $tasksArrOb): ?array
     {
 
         $tasks_arr = array();
 
-        foreach($tasks_arr_ob as $record){
+        foreach($tasksArrOb as $record){
             $tasks_arr[] = array(
                 'ID' =>$record->getId(),
                 'StartFrom' => $record->getStartFrom()->format('Y-m-d H:i:s'),
@@ -84,23 +89,23 @@ class TasksService
         return $tasks_arr;
     }
 
-    public function calculateTasksTotalTime(array $tasks_arr_ob): ?int
+    public function calculateTasksTotalTime(array $tasksArrOb): ?int
     {
-        $total_time = 0;
+        $totalTime = 0;
             
-        foreach($tasks_arr_ob as $record){
-            $date_time_from = $record->getStartFrom()->format('U');
+        foreach($tasksArrOb as $record){
+            $dateTimeFrom = $record->getStartFrom()->format('U');
             if($record->getEndDateTime()){
-                $date_time_to = $record->getEndDateTime()->format('U');
+                $dateTimeTo = $record->getEndDateTime()->format('U');
             } else {
-                $date_time_to =(new  \DateTime())->format('U');
+                $dateTimeTo =(new  \DateTime())->format('U');
             }
-            $interval = $date_time_to - $date_time_from;
+            $interval = $dateTimeTo - $dateTimeFrom;
 
-            $total_time = $total_time + $interval;
+            $totalTime = $totalTime + $interval;
         }
         //Return value in minutes from seconds
-        return $total_time/60;
+        return $totalTime/60;
     
     }
 
